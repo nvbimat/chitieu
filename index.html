@@ -8,9 +8,6 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Chart.js for Analytics -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     
@@ -118,6 +115,58 @@
             </div>
         </div>
 
+        <!-- CÁC CHỈ SỐ SO SÁNH THEO DÒNG -->
+        <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+            <div class="p-3 bg-slate-50 border-b border-slate-100 flex items-center space-x-1.5 text-indigo-600">
+                <i data-lucide="activity" class="w-4 h-4"></i>
+                <h2 class="text-sm font-bold text-slate-900">Phân Tích Hiệu Quả (Tổng quát)</h2>
+            </div>
+            
+            <div class="divide-y divide-slate-100">
+                <!-- Dòng 1: % Tổng thu nhập và Tiền lời -->
+                <div class="p-3.5 flex items-center justify-between hover:bg-slate-50 transition">
+                    <div class="flex items-center space-x-3">
+                        <div class="p-2 bg-emerald-50 text-emerald-600 rounded-lg shrink-0">
+                            <i data-lucide="pie-chart" class="w-4 h-4"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-700">Biên Lợi Nhuận</p>
+                            <p class="text-[10px] text-slate-500 mt-0.5">% Lời / Thu nhập</p>
+                        </div>
+                    </div>
+                    <h4 id="stat-ratio-profit" class="text-sm font-black text-emerald-600">0%</h4>
+                </div>
+
+                <!-- Dòng 2: % Tiền lời và Tiền xài -->
+                <div class="p-3.5 flex items-center justify-between hover:bg-slate-50 transition">
+                    <div class="flex items-center space-x-3">
+                        <div class="p-2 bg-rose-50 text-rose-600 rounded-lg shrink-0">
+                            <i data-lucide="flame" class="w-4 h-4"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-700">Tỷ Lệ Tiêu Xài</p>
+                            <p class="text-[10px] text-slate-500 mt-0.5">% Chi tiêu / Tiền lời</p>
+                        </div>
+                    </div>
+                    <h4 id="stat-ratio-expense" class="text-sm font-black text-rose-600">0%</h4>
+                </div>
+
+                <!-- Dòng 3: Tiền lời trung bình mỗi ngày -->
+                <div class="p-3.5 flex items-center justify-between hover:bg-slate-50 transition">
+                    <div class="flex items-center space-x-3">
+                        <div class="p-2 bg-indigo-50 text-indigo-600 rounded-lg shrink-0">
+                            <i data-lucide="calendar-check" class="w-4 h-4"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-700">Hiệu Suất Ngày</p>
+                            <p class="text-[10px] text-slate-500 mt-0.5">Tiền lời trung bình / ngày</p>
+                        </div>
+                    </div>
+                    <h4 id="stat-avg-profit" class="text-sm font-black text-indigo-600">0đ</h4>
+                </div>
+            </div>
+        </div>
+
         <!-- ADD EXPENSE FORM (Compact) -->
         <div class="bg-white rounded-xl p-4 border border-slate-100 shadow-sm">
             <div class="flex items-center space-x-1.5 border-b border-slate-100 pb-2 mb-3 text-rose-600">
@@ -152,17 +201,6 @@
                     </button>
                 </div>
             </form>
-        </div>
-
-        <!-- ANALYTICS CHART (Smaller height) -->
-        <div class="bg-white rounded-xl p-4 border border-slate-100 shadow-sm">
-            <div class="flex items-center space-x-1.5 border-b border-slate-100 pb-2 mb-3 text-indigo-600">
-                <i data-lucide="bar-chart-2" class="w-4 h-4"></i>
-                <h2 class="text-sm font-bold text-slate-900">Biểu Đồ Tài Chính</h2>
-            </div>
-            <div class="relative w-full h-[180px] flex items-center justify-center">
-                <canvas id="financeChart"></canvas>
-            </div>
         </div>
 
         <!-- EXPENSE HISTORY (List View) -->
@@ -212,11 +250,10 @@
         };
     </script>
 
-    <!-- CORE LOGIC & CHART SCRIPT -->
+    <!-- CORE LOGIC & METRICS SCRIPT -->
     <script>
         let revenueRecords = [];
         let expenseRecords = [];
-        let financeChart = null;
 
         function handlePriceBlur(input) {
             let val = parseInt(input.value) || 0;
@@ -282,10 +319,18 @@
                 all: { profit: 0, expense: 0, balance: 0 }
             };
 
+            let totalRevAll = 0;
+            let minDateTimestamp = Date.now();
+
             // Quét 1 lượt Doanh Thu
             revenueRecords.forEach(r => {
-                let p = (Number(r.giaBan) || 0) - (Number(r.giaVon) || 0);
+                let ban = Number(r.giaBan) || 0;
+                let p = ban - (Number(r.giaVon) || 0);
                 let d = new Date(r.thoiGian);
+                let dTime = d.getTime();
+                
+                totalRevAll += ban;
+                if(dTime < minDateTimestamp) minDateTimestamp = dTime;
                 
                 stats.all.profit += p;
                 if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
@@ -300,6 +345,9 @@
             expenseRecords.forEach(e => {
                 let cost = Number(e.soTien) || 0;
                 let d = new Date(e.thoiGian);
+                let dTime = d.getTime();
+                
+                if(dTime < minDateTimestamp) minDateTimestamp = dTime;
                 
                 stats.all.expense += cost;
                 if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
@@ -337,9 +385,17 @@
             if(stats.all.balance < 0) { elAll.classList.add('text-rose-300'); elAll.classList.remove('text-white'); }
             else { elAll.classList.remove('text-rose-300'); elAll.classList.add('text-white'); }
 
+            // TÍNH TOÁN 3 CHỈ SỐ SO SÁNH
+            let ratioProfitMargin = totalRevAll > 0 ? ((stats.all.profit / totalRevAll) * 100).toFixed(1) : 0;
+            let ratioExpense = stats.all.profit > 0 ? ((stats.all.expense / stats.all.profit) * 100).toFixed(1) : (stats.all.expense > 0 ? 100 : 0);
+            
+            let daysDiff = Math.ceil((Date.now() - minDateTimestamp) / (1000 * 60 * 60 * 24));
+            if (daysDiff < 1 || isNaN(daysDiff)) daysDiff = 1;
+            let avgProfitPerDay = stats.all.profit / daysDiff;
 
-            // Vẽ Biểu Đồ So Sánh (Tháng Này vs Tất Cả)
-            renderChart(stats);
+            document.getElementById('stat-ratio-profit').innerText = ratioProfitMargin + '%';
+            document.getElementById('stat-ratio-expense').innerText = ratioExpense + '%';
+            document.getElementById('stat-avg-profit').innerText = formatMoney(avgProfitPerDay);
 
             // Cập nhật Danh sách lịch sử chi (Mặc định hiện tất cả)
             const listContainer = document.getElementById('expense-list-container');
@@ -368,42 +424,6 @@
                 listContainer.appendChild(div);
             });
             lucide.createIcons();
-        }
-
-        // Vẽ biểu đồ so sánh: Tháng này vs Tổng cộng
-        function renderChart(stats) {
-            const ctx = document.getElementById('financeChart').getContext('2d');
-            
-            if (financeChart) financeChart.destroy();
-
-            financeChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['Hôm Nay', 'Tháng Này', 'Tất Cả'],
-                    datasets: [
-                        { label: 'Lợi Nhuận', data: [stats.day.profit>0?stats.day.profit:0, stats.month.profit>0?stats.month.profit:0, stats.all.profit>0?stats.all.profit:0], backgroundColor: '#10B981', borderRadius: 4, barPercentage: 0.8 },
-                        { label: 'Đã Chi', data: [stats.day.expense>0?stats.day.expense:0, stats.month.expense>0?stats.month.expense:0, stats.all.expense>0?stats.all.expense:0], backgroundColor: '#F43F5E', borderRadius: 4, barPercentage: 0.8 }
-                    ]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom', labels: { boxWidth: 10, padding: 10, font: { size: 10, weight: 'bold' } } },
-                        tooltip: { callbacks: { label: function(context) { return formatMoney(context.raw); } } }
-                    },
-                    scales: {
-                        y: { 
-                            beginAtZero: true, grid: { color: '#f1f5f9' }, 
-                            ticks: { font: { size: 10 }, callback: function(value) {
-                                if (value >= 1000000) return (value / 1000000) + 'tr';
-                                if (value >= 1000) return (value / 1000) + 'k';
-                                return value;
-                            }}
-                        },
-                        x: { grid: { display: false } }
-                    }
-                }
-            });
         }
 
         window.submitExpense = async function(e) {
